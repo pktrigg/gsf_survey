@@ -2,7 +2,7 @@ gsf_survey
 =====
 * created:       December 2023
 * by:            paul.kennedy@guardiangeomatics.com
-* description:   python module to read an SDB file
+* description:   python module to read a GSF file
 * developed for Python version 3++
 * based on GSF V3.09
 
