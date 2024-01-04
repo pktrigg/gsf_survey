@@ -255,14 +255,14 @@ def testreader():
 	print ("PingCount:", pingcount)
 	return
 
-###############################################################################
-def getsuitableepsg(filename):
-	'''load the first position record and return the EPSG code for the position'''
-	r = GSFREADER(filename)
-	approxlongitude, approxlatitude = r.getapproximatepositon()
-	epsg = geodetic.epsgfromlonglat (approxlongitude, approxlatitude)
-	r.close()
-	return epsg
+# ###############################################################################
+# def getsuitableepsg(filename):
+# 	'''load the first position record and return the EPSG code for the position'''
+# 	r = GSFREADER(filename)
+# 	approxlongitude, approxlatitude = r.getapproximatepositon()
+# 	epsg = geodetic.epsgfromlonglat (approxlongitude, approxlatitude)
+# 	r.close()
+# 	return epsg
 
 ###############################################################################
 def from_timestamp(unixtime):

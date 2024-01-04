@@ -8,10 +8,6 @@
             "stopOnEntry": false,
             "program": "${file}",
             "python": "python.exe",
-            "debugOptions": [
-                "WaitOnAbnormalExit",
-                "RedirectOutput"
-            ],
         }
    ]
 }
