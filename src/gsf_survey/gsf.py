@@ -194,13 +194,18 @@ def testreader():
 	# filename = "C:/sampledata/gsf/0095_20220701_033832.gsf"
 	# filename = "F:/projects/ggmatch/lazgsfcomparisontest/IDN-JI-SR23_1-PH-B46-001_0000_20220419_162536.gsf"
 	# filename = "D:/projects/likehart/01_GSF/0116_20220728_075347.gsf"
-	filename = "C:/projects/ReachDemo/InitialFiles/J129N032_GSF.gsf"
+	# filename = "C:/projects/ReachDemo/InitialFiles/J129N032_GSF.gsf"
 	# filename = "f:/projects/reachdemo/good_sample.gsf"
 	# filename =  "F:/projects/ReachDEmo2/01_GSF/SID104_J129N032.gsf"
 	# filename = "D:/P23026_INPEX_Site_Surveys_R1/P23026_INPEX_Site_Surveys/ICHTHYS_Final_Deliverable/02_Processed_Data_Pack/Geophysical/L2_MBES/CARIS_Project/GGMatch/ICHTHYS_North/01_GSF/0003_20231017_000545_ShipName.gsf"
 	# filename = "F:/projects/Inpex/ICHTHYS_BDC1DF_Central_DrillingMooring/01_GSF/0117_20231019_060209_ShipName.gsf"
 	# filename = "F:/projects/Inpex/BadFile/0117_20231019_060209_ShipName.gsf"
 	filename = r"C:\sampledata\gsf\J313N000.gsf"
+	# filename = r"Y:\Subsea-Cloud\ReachDemo\Backscatter_Caris\NaviEdit_Exported_GSFs\GSF\240301200650.gsf"
+	# filename = r"Y:\Subsea-Cloud\ReachDemo\Backscatter_Caris\From_Daniel_GSF\OneDrive_1_02-02-2024\B2-CL\231120000808\231120000808.gsf"
+
+
+
 	pingfilename = os.path.join(os.path.dirname(filename) , os.path.splitext(os.path.basename(filename))[0] + ".txt")
 	ptr = open(pingfilename, "w" )
 
@@ -209,7 +214,7 @@ def testreader():
 	# create a GSFREADER class and pass the filename
 	r = GSFREADER(filename)
 	# r.loadscalefactors()
-	navigation = r.loadnavigation()
+	# navigation = r.loadnavigation()
 	# ts, roll, pitch, heave, heading = r.loadattitude()
 
 	while r.moreData():
@@ -217,7 +222,7 @@ def testreader():
 		# The user then needs to call the read() method for the class to undertake a fileread and binary decode.  This keeps the read super quick.
 		startbyte = r.fileptr.tell()
 		numberofbytes, recordidentifier, datagram = r.readdatagram()
-		# print(recordidentifier)
+		print(recordidentifier)
 
 		if recordidentifier == HEADER:
 			datagram.read()
@@ -272,14 +277,16 @@ def from_timestamp(unixtime):
 ###############################################################################
 class UNKNOWN_RECORD:
 	'''used as a convenience tool for datagrams we have no bespoke classes.  Better to make a bespoke class'''
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier
-		self.offset = fileptr.tell()
-		self.hdrlen = hdrlen
-		self.numbytes = numbytes
-		self.fileptr = fileptr
-		self.fileptr.seek(numbytes, 1) # set the file ptr to the end of the record
-		self.data = ""
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier
+			self.offset = fileptr.tell()
+			self.hdrlen = hdrlen
+			self.numbytes = numbytes
+			self.fileptr = fileptr
+			self.fileptr.seek(numbytes, 1) # set the file ptr to the end of the record
+			self.data = ""
+		self.bytes = None
 
 	def read(self):
 		self.data = self.fileptr.read(self.numberofbytes)
@@ -294,14 +301,16 @@ class SCALEFACTOR:
 	
 ##################################################################################################
 class SWATH_BATHYMETRY_PING :
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
-		self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen = hdrlen						# remember the header length.  it should be 8 bytes, but if checksum then it is 12
-		self.numbytes = numbytes					# remember how many bytes this packet contains
-		self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
-	
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
+			self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen = hdrlen						# remember the header length.  it should be 8 bytes, but if checksum then it is 12
+			self.numbytes = numbytes					# remember how many bytes this packet contains
+			self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+		self.bytes = None
+
 		self.scalefactorsd = {}
 		# self.scalefactors = []
 		self.DEPTH_ARRAY = []
@@ -1047,13 +1056,15 @@ class SWATH_BATHYMETRY_PING :
 
 ###############################################################################
 class CCOMMENT:
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
-		self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
-		self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
-		self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
+			self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
+			self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
+			self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+		self.bytes = None
 
 	###############################################################################
 	#TIME Time of comment.I2*4
@@ -1087,15 +1098,17 @@ class CCOMMENT:
 
 ###############################################################################
 class CCOMMENT:
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
-		self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
-		self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
-		self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
+			self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
+			self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
+			self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+		self.bytes = None
 
-	###############################################################################
+		###############################################################################
 	#TIME Time of comment.I2*4
 	#TEXT_LENGTH Number of characters in text (R). I4
 	#COMMENT_TEXT	Text containing comment.TR
@@ -1127,13 +1140,14 @@ class CCOMMENT:
 
 ###############################################################################
 class CATTITUDE:
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier 	= recordidentifier	# assign the GSF code for this datagram type
-		self.offset 			= fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen 			= hdrlen						# remember where this packet resides in the file so we can return if needed
-		self.numbytes 			= numbytes - hdrlen					# remember how many bytes this packet contains
-		self.fileptr 			= fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier 	= recordidentifier	# assign the GSF code for this datagram type
+			self.offset 			= fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen 			= hdrlen						# remember where this packet resides in the file so we can return if needed
+			self.numbytes 			= numbytes - hdrlen					# remember how many bytes this packet contains
+			self.fileptr 			= fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
 
 	###############################################################################
 	# BASE_TIME	Full time of the first attitude measurement	I	2*4
@@ -1144,6 +1158,14 @@ class CATTITUDE:
 	# HEAVE	Array of heave measurements	T	N*2
 	# HEADING	Array of heading measurements	T	N*2
 
+	###########################################################################
+	def write(self, timestamp, nanoseconds, nummeasurements, measurements):
+		rec_fmt = '>2lH'
+		rec_pack = struct.Struct(rec_fmt).pack
+		self.bytes = rec_pack([timestamp, nanoseconds, nummeasurements])
+
+
+	###########################################################################
 	def read(self):
 		rec_fmt = '>2lH'
 		rec_len = struct.calcsize(rec_fmt)
@@ -1294,13 +1316,23 @@ class CPROCESSINGPARAMETERS:
 
 ###############################################################################
 class CHEADER:
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
-		self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
-		self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
-		self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
+			self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
+			self.numbytes = numbytes - hdrlen					# remember how many bytes this packet contains
+			self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+		
+		self.bytes = None
+
+	###############################################################################
+	def write(self, header="GSF-v03.09"):
+		rec_fmt = '=12s'
+		# rec_len = struct.calcsize(rec_fmt)
+		# rec_pack = struct.Struct(rec_fmt).pack
+		self.bytes = struct.pack(rec_fmt, bytes(header.encode("utf-8")))
 
 	###############################################################################
 	def read(self):
@@ -1326,14 +1358,15 @@ class CHEADER:
 
 ###############################################################################
 class CSWATH_BATHY_SUMMARY:
-	def __init__(self, fileptr, numbytes, recordidentifier, hdrlen):
-		self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
-		self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
-		self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
-		self.numbytes = numbytes - hdrlen			# remember how many bytes this packet contains
-		self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
-		self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
-
+	def __init__(self, fileptr=None, numbytes=0, recordidentifier=0, hdrlen=0):
+		if fileptr is not None:
+			self.recordidentifier = recordidentifier	# assign the GSF code for this datagram type
+			self.offset = fileptr.tell()				# remember where this packet resides in the file so we can return if needed
+			self.hdrlen = hdrlen						# remember where this packet resides in the file so we can return if needed
+			self.numbytes = numbytes - hdrlen			# remember how many bytes this packet contains
+			self.fileptr = fileptr						# remember the file pointer so we do not need to pass from the host process
+			self.fileptr.seek(numbytes, 1)				# move the file pointer to the end of the record so we can skip as the default actions
+		self.bytes = None
 	###############################################################################
 	def read(self):
 		rec_fmt = '>10l'
@@ -1367,6 +1400,37 @@ class CSWATH_BATHY_SUMMARY:
 		return pprint.pformat(vars(self))
 
 ###############################################################################
+class GSFWRITER:
+	def __init__(self, filename):
+		'''
+		class to write generic sensor format files.
+		'''
+		self.fileName 		= filename
+		self.fileptr 		= open(filename, 'wb')
+		self.hdrfmt = ">LL"
+		self.hdrlen = struct.calcsize(self.hdrfmt)
+
+	###########################################################################
+	def writeDatagram(self, datagram):
+		'''write a datagram to the file'''
+
+		self.fileptr.write(datagram.bytes)
+		
+	###########################################################################
+	def close(self):
+		'''
+		close the file
+		'''
+		self.fileptr.close()
+
+	###########################################################################
+	def currentPtr(self):
+		return self.fileptr.tell()
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
 class GSFREADER:
 	def __init__(self, filename, loadscalefactors=False):
 		'''
@@ -1388,12 +1452,6 @@ class GSFREADER:
 		# if loadscalefactors:
 		# self.scalefactors = self.loadscalefactors()
 		self.attitudedata = np.empty((0), int)
-
-	###########################################################################
-	def moreData(self):
-		bytesRemaining = self.fileSize - self.fileptr.tell()
-		return bytesRemaining
-		# print ("current file ptr position: %d size %d" % ( self.fileptr.tell(), self.fileSize))
 
 	###########################################################################
 	def currentPtr(self):
@@ -1419,6 +1477,37 @@ class GSFREADER:
 		pretty print this class
 		'''
 		return pprint.pformat(vars(self))
+
+	###########################################################################
+	def moreData(self):
+		bytesRemaining = self.fileSize - self.fileptr.tell()
+		return bytesRemaining
+		# print ("current file ptr position: %d size %d" % ( self.fileptr.tell(), self.fileSize))
+
+	# ###########################################################################
+	# def currentPtr(self):
+	# 	return self.fileptr.tell()
+
+	# ###########################################################################
+	# def close(self):
+	# 	'''
+	# 	close the file
+	# 	'''
+	# 	self.fileptr.close()
+		
+	# ###########################################################################
+	# def rewind(self):
+	# 	'''
+	# 	go back to start of file
+	# 	'''
+	# 	self.fileptr.seek(0, 0)				
+
+	# ###########################################################################
+	# def __str__(self):
+	# 	'''
+	# 	pretty print this class
+	# 	'''
+	# 	return pprint.pformat(vars(self))
 
 	###########################################################################
 	def readDatagramBytes(self, offset, byteCount):

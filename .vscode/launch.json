@@ -3,11 +3,12 @@
     "configurations": [
         {
             "name": "Python",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "stopOnEntry": false,
             "program": "${file}",
             "python": "python.exe",
+            "args": ["-i", "Y:/Subsea-Cloud/SI1044/SI1044_FINAL/Processed_Data_Pack/Hydrographic/L2_GSF_Export/" ],
         }
    ]
 }

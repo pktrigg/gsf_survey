@@ -47,7 +47,7 @@ def main():
 			datagram.read()
 			# print(datagram)
 
-		# if recordidentifier == 	gsf.ATTITUDE:
+		if recordidentifier == 	gsf.ATTITUDE:
 			datagram.read()
 			# r.attitudedata = np.append(r.attitudedata, datagram.attitudearray, axis=0)
 			# print(datagram)
